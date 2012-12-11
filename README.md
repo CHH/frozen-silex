@@ -2,6 +2,13 @@
 
 _Static site generator built for Silex._
 
+**This is a proof of concept** and may not work for you. Some known
+issues include:
+
+* Generated sites only work at the root of the server.
+* Generated sites can not be browsed without a server because URLs are
+  not rewritten to be relative.
+
 ## Install
 
 Require `chh/frozen-silex` in your Silex Application's `composer.json`.
