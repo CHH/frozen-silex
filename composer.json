@@ -13,11 +13,7 @@
     "require": {
         "php": ">=5.3.3",
         "symfony/console": "2.1.*",
-        "symfony/yaml": "2.1.*",
         "symfony/browser-kit": "2.1.*",
-        "symfony/dom-crawler": "2.1.*",
-        "symfony/css-selector": "2.1.*",
-        "pimple/pimple": "1.*",
         "silex/silex": "1.0.x-dev"
     },
     "bin": ["bin/silex-freeze"],
