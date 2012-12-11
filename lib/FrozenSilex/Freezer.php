@@ -25,12 +25,12 @@ class Freezer
         }
 
         if (!isset($app['freezer.destination'])) {
-            $app['freezer.destination'] = '_site';
+            $app['freezer.destination'] = 'build';
         }
 
-        $self = $this;
-
         if ($app['freezer.override_url_generator']) {
+            $self = $this;
+
             # Override the app's URL generator with a generator which freezes
             # every route automatically when the generator is called within
             # the app's controllers or views.
@@ -139,38 +139,44 @@ class Freezer
     function freezeRoute($uri)
     {
         $client = new HttpKernel\Client($this->application);
+        $client->request('GET', $uri);
 
-        $crawler = $client->request('GET', $uri);
         $response = $client->getResponse();
 
-        $out = ltrim($uri, '/');
-
-        if (($pos = strpos($out, '?')) !== false) {
-            $out = substr($out, 0, $pos - 1);
+        if (!$response->isOk()) {
+            return;
         }
 
-        if (empty($out)) {
-            $out = "index.html";
-        } else {
-            $out = "$out.html";
+        $destination = $this->application['freezer.destination'] . $this->getFileName($uri);
+
+        if (!is_dir(dirname($destination))) {
+            mkdir(dirname($destination, 0755, true));
         }
 
-        foreach ($crawler->filter("a") as $link) {
-            if (!$href = $link->getAttribute('href')) {
-                continue;
-            }
-
-            # Freeze only local links
-            if (substr($href, 0, 2) !== '//' and !preg_match('~^[a-zA-Z]+://~', $href)) {
-                $this->freezeRoute($href);
-            }
-        }
-
-        file_put_contents($this->application['freezer.destination'] . "/$out", $response->getContent());
+        file_put_contents($destination, $response->getContent());
 
         if (isset($this->application['logger'])) {
             $app['logger']->addInfo("Freezed URI $uri to $out");
         }
+    }
+
+    protected function getFileName($uri)
+    {
+        if (($pos = strpos($uri, '?')) !== false) {
+            $uri = substr($uri, 0, $pos - 1);
+        }
+
+        if (substr($uri, -1, 1) === '/') {
+            $file = $uri . "index.html";
+        } else {
+            $file = "$uri.html";
+        }
+
+        if (!substr($file, 0, 1) === '/') {
+            $file = "/$file";
+        }
+
+        return $file;
     }
 }
 
