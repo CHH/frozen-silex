@@ -26,21 +26,23 @@ class FreezingUrlGenerator implements UrlGeneratorInterface
     /** {@inheritDoc} */
     function generate($name, $parameters = array(), $absolute = false)
     {
-        $uri = $this->generator->generate($name, $parameters, $absolute);
+        $url = $this->generator->generate($name, $parameters, $absolute);
 
-        $this->freezer->freezeRoute($uri);
+        if (!$absolute) {
+            $this->freezer->freezeRoute($name, $parameters);
+        }
 
-        return $uri;
+        return $url;
     }
 
     function setContext(RequestContext $context)
     {
-        $this->context = $context;
+        $this->generator->setContext($context);
     }
 
     function getContext()
     {
-        return $this->context;
+        return $this->generator->getContext();
     }
 }
 

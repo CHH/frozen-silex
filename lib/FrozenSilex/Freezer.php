@@ -3,6 +3,7 @@
 namespace FrozenSilex;
 
 use Symfony\Component\Routing\Generator\UrlGenerator;
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\HttpKernel;
 
 /**
@@ -21,11 +22,15 @@ class Freezer
         $this->application = $app;
 
         if (!isset($app['freezer.override_url_generator'])) {
-            $app['freezer.override_url_generator'] = false;
+            $app['freezer.override_url_generator'] = true;
         }
 
         if (!isset($app['freezer.destination'])) {
             $app['freezer.destination'] = 'build';
+        }
+
+        if (!isset($app['url_generator'])) {
+            $app->register(new \Silex\Provider\UrlGeneratorServiceProvider);
         }
 
         if ($app['freezer.override_url_generator']) {
@@ -34,12 +39,8 @@ class Freezer
             # Override the app's URL generator with a generator which freezes
             # every route automatically when the generator is called within
             # the app's controllers or views.
-            $app['url_generator'] = $app->share(function() use ($app, $self) {
-                if (!isset($app['url_generator'])) {
-                    $app->register(new \Silex\Provider\UrlGeneratorServiceProvider);
-                }
-
-                return new FreezingUrlGenerator($app['url_generator'], $self);
+            $app['url_generator'] = $app->extend('url_generator', function($generator) use ($self) {
+                return new FreezingUrlGenerator($generator, $self);
             });
         }
 
@@ -99,7 +100,6 @@ class Freezer
         $this->application->boot();
         $this->application->flush();
 
-        $generator = new UrlGenerator($this->application['routes'], $this->application['request_context']);
         $output = $this->application['freezer.destination'];
 
         if (!is_dir($output)) {
@@ -121,33 +121,47 @@ class Freezer
                 $routeName = $route[0];
                 $params = @$route[1] ?: array();
 
-                $this->freezeRoute($generator->generate($routeName, $params));
+                $this->freezeRoute($routeName, $params);
             } else {
-                $this->freezeRoute((string) $route);
+                $this->freezeUrl((string) $route);
             }
         }
     }
 
+    function freezeRoute($route, $parameters = array())
+    {
+        $requestContext = new RequestContext;
+        $generator = new UrlGenerator($this->application['routes'], $requestContext);
+
+        $url = $generator->generate($route, $parameters);
+
+        return $this->freezeUrl($url);
+    }
+
     /**
-     * Freezes a given URI
+     * Freezes a given URL
      *
      * @todo Fix links so the static page can be viewed without server
      * @todo Add setting to rewrite links to a given base path.
      *
-     * @param string $uri
+     * @param string $url
      */
-    function freezeRoute($uri)
+    function freezeUrl($url)
     {
         $client = new HttpKernel\Client($this->application);
-        $client->request('GET', $uri);
+        $client->request('GET', $url);
 
         $response = $client->getResponse();
 
         if (!$response->isOk()) {
+            if (isset($app['logger'])) {
+                $app['logger']->addError(sprintf('Could not freeze URL "%s"', $url));
+            }
+
             return;
         }
 
-        $destination = $this->application['freezer.destination'] . $this->getFileName($uri);
+        $destination = $this->application['freezer.destination'] . $this->getFileName($url);
 
         if (!is_dir(dirname($destination))) {
             mkdir(dirname($destination, 0755, true));
@@ -156,7 +170,7 @@ class Freezer
         file_put_contents($destination, $response->getContent());
 
         if (isset($this->application['logger'])) {
-            $app['logger']->addInfo("Freezed URI $uri to $out");
+            $app['logger']->addInfo(sprintf('Freezed URL "%s" to "%s"', $url, $destination));
         }
     }
 
