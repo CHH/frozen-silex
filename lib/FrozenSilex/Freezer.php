@@ -16,6 +16,8 @@ class Freezer
 {
     protected $application;
     protected $generators = array();
+    protected $frozen = array();
+    protected $frozenRoutes = array();
 
     function __construct(\Silex\Application $app)
     {
@@ -49,6 +51,7 @@ class Freezer
             $routes = array();
 
             foreach ($app['routes']->all() as $name => $route) {
+                $route->compile();
                 $routes[] = array($name);
             }
 
@@ -97,8 +100,14 @@ class Freezer
      */
     function freeze()
     {
+        $this->frozen = array();
+        $this->frozenRoutes = array();
+
         $this->application->boot();
         $this->application->flush();
+
+        $this->application['debug'] = true;
+        $this->application['exception_handler']->disable();
 
         $output = $this->application['freezer.destination'];
 
@@ -130,12 +139,22 @@ class Freezer
 
     function freezeRoute($route, $parameters = array())
     {
+        if (in_array($route, $this->frozenRoutes)) {
+            return;
+        }
+
         $requestContext = new RequestContext;
         $generator = new UrlGenerator($this->application['routes'], $requestContext);
 
-        $url = $generator->generate($route, $parameters);
+        try {
+            $url = $generator->generate($route, $parameters);
+        } catch (\Exception $e) {
+        }
 
-        return $this->freezeUrl($url);
+        if (isset($url)) {
+            $this->frozenRoutes[] = $route;
+            return $this->freezeUrl($url);
+        }
     }
 
     /**
@@ -148,30 +167,28 @@ class Freezer
      */
     function freezeUrl($url)
     {
+        if (in_array($url, $this->frozen)) {
+            return;
+        }
+
         $client = new HttpKernel\Client($this->application);
         $client->request('GET', $url);
 
         $response = $client->getResponse();
 
         if (!$response->isOk()) {
-            if (isset($app['logger'])) {
-                $app['logger']->addError(sprintf('Could not freeze URL "%s"', $url));
-            }
-
             return;
         }
 
         $destination = $this->application['freezer.destination'] . $this->getFileName($url);
 
         if (!is_dir(dirname($destination))) {
-            mkdir(dirname($destination, 0755, true));
+            mkdir(dirname($destination), 0755, true);
         }
 
         file_put_contents($destination, $response->getContent());
 
-        if (isset($this->application['logger'])) {
-            $app['logger']->addInfo(sprintf('Freezed URL "%s" to "%s"', $url, $destination));
-        }
+        $this->frozen[] = $url;
     }
 
     protected function getFileName($uri)
