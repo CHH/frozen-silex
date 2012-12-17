@@ -32,6 +32,12 @@ class FreezingUrlGenerator implements UrlGeneratorInterface
             $this->freezer->freezeRoute($name, $parameters);
         }
 
+        if (substr($url, -1, 1) === '/') {
+            $url .= "index.html";
+        } else {
+            $url .= ".html";
+        }
+
         return $url;
     }
 
