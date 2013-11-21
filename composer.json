@@ -12,9 +12,13 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "symfony/console": "2.1.*",
-        "symfony/browser-kit": "2.1.*",
+        "symfony/console": "~2.1",
+        "symfony/browser-kit": "~2.1",
         "silex/silex": "~1.0"
+    },
+    "require-dev": {
+        "twig/twig": "~1.0",
+        "symfony/twig-bridge": "~2.0"
     },
     "bin": ["bin/silex-freeze"],
     "autoload": {

@@ -203,11 +203,10 @@ class Freezer
             $file = "$uri.html";
         }
 
-        if (!substr($file, 0, 1) === '/') {
+        if (substr($file, 0, 1) !== '/') {
             $file = "/$file";
         }
 
         return $file;
     }
 }
-

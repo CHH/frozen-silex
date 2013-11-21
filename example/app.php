@@ -2,20 +2,18 @@
 
 $app = new \Silex\Application;
 $app->register(new \Silex\Provider\UrlGeneratorServiceProvider);
+$app->register(new \Silex\Provider\TwigServiceProvider, array(
+    'twig.path' => __DIR__ . '/views'
+));
+
+$app['debug'] = true;
 
 $app->get('/', function() use ($app) {
-    $fooUrl = $app['url_generator']->generate('foo');
+    return $app['twig']->render('index.html');
+})->bind('home');
 
-    return <<<HTML
-Hi!
-
-<a href="$fooUrl">Foo</a>
-HTML;
-});
-
-$app->get('/hello', function() {
-    return "Hello!";
-})->bind('foo');
+$app->get('/hello', function() use ($app) {
+    return $app['twig']->render('hello.html');
+})->bind('hello');
 
 return $app;
-

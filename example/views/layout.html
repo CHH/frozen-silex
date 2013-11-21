@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FrozenSilex Test</title>
+    </head>
+    <body>
+        <h1>Hello World</h1>
+        <h2>Navigation</h2>
+        <nav>
+            <ul>
+                <li><a href="{{ path('home') }}">Home</a></li>
+                <li><a href="{{ path('hello') }}">Hello</a></li>
+            </ul>
+        </nav>
+
+        {% block content %}{% endblock %}
+    </body>
+</html>
