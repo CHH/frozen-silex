@@ -11,4 +11,3 @@ $app->before(function() use ($app) {
 $freezer = new \FrozenSilex\Freezer($app);
 
 return $freezer;
-
