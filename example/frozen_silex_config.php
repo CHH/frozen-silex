@@ -1,6 +1,7 @@
 <?php
 
 $app = require(__DIR__ . '/app.php');
+$app['debug'] = true;
 
 /*
 $app->before(function() use ($app) {

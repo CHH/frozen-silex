@@ -6,8 +6,6 @@ $app->register(new \Silex\Provider\TwigServiceProvider, array(
     'twig.path' => __DIR__ . '/views'
 ));
 
-$app['debug'] = true;
-
 $app->get('/', function() use ($app) {
     return $app['twig']->render('index.html');
 })->bind('home');
