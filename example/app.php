@@ -16,4 +16,8 @@ $app->get('/hello', function() use ($app) {
     return $app['twig']->render('hello.html');
 })->bind('hello');
 
+$app->get('/foo/bar', function() use ($app) {
+    return $app['twig']->render('hello.html');
+});
+
 return $app;

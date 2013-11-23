@@ -38,8 +38,6 @@ class FreezingUrlGenerator implements UrlGeneratorInterface
             $url .= ".html";
         }
 
-        $url = ltrim($url, '/');
-
         return $url;
     }
 
