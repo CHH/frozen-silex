@@ -139,7 +139,8 @@ class Freezer
 
     function freezeRoute($route, $parameters = array())
     {
-        if (in_array($route, $this->frozenRoutes)) {
+        $uniqueRoute = $route.implode('-', $parameters);
+	if (in_array($uniqueRoute, $this->frozenRoutes)) {
             return;
         }
 
@@ -152,7 +153,7 @@ class Freezer
         }
 
         if (isset($url)) {
-            $this->frozenRoutes[] = $route;
+            $this->frozenRoutes[] = $uniqueRoute;
             return $this->freezeUrl($url);
         }
     }
